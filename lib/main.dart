@@ -5,7 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_native_splash/flutter_native_splash.dart';
 // DB
 import 'package:sqflite/sqflite.dart';
-import 'package:path/path.dart';
+import 'package:path/path.dart' as Path;
 import 'package:flutter/services.dart';
 
 
@@ -44,55 +44,73 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
+
+  // Create a text controller and use it to retrieve the current value
+  // of the TextField.
+  final TextEditingController _textFieldController = TextEditingController();
+  // 텍스트 필드 null 체크
+  bool _validate = false;
+  // final myController = TextEditingController();
+  List<Map<String, dynamic>> _dataList = [];
+
+  // 데이터베이스 초기화 및 데이터 로딩
+  @override
+  void initState() {
+    super.initState();
+    _loadData();
+  }
+
+  // 데이터베이스 초기화
+  Future<Database> _initDB() async {
+    final dbPath = await getDatabasesPath();
+    final path = Path.join(dbPath, 'ddutch.db');
+    return await openDatabase(
+      path,
+      version: 1,
+      onCreate: (db, version) async {
+        await db.execute(
+          // 'CREATE TABLE example(id INTEGER PRIMARY KEY, name TEXT)',
+          'CREATE TABLE ddutch(seq INTEGER PRIMARY KEY AUTOINCREMENT, sum INTEGER default 0, preSum INTEGER default 0, i TEXT default "땃쥐1", u TEXT default "땃쥐2")',
+        );
+      },
+    );
+  }
+
+  // 데이터 로딩
+  Future<void> _loadData() async {
+    final db = await _initDB();
+    final dataList = await db.query('ddutch');
+    setState(() {
+      _dataList = dataList;
+    });
+  }
+
+
   int _counter = 0;
   // 나중에 DB값 가져와 셋팅 변경
   int price=0;
   int prePrice=0;
-  // the initState method, and clean it up in the dispose method.
+  // the initText method, and clean it up in the dispose method.
   late FocusNode myFocusNode;
-
 
   void _calPrice(int n) {
     setState(() {
       // _counter++;
-      if (n==0){
+      if (n < 5){
         prePrice=price;
-        price += int.parse(myController.text);
+        price += (int.parse(_textFieldController.text) * n);
       } else{
         price =prePrice;
       }
     });
   } 
-  
-
-
-  
-  // 텍스트 팝업? 위한 함수
-  // Create a text controller and use it to retrieve the current value
-  // of the TextField.
-  final myController = TextEditingController();
-  @override
-  void dispose() {
-    // Clean up the controller when the widget is disposed.
-    myController.dispose();
-    setState(() {
-      // 입력값 숫자 형변환 후 금액 셋팅
-      // _counter=int.parse(myController.text);
-      price = int.parse(myController.text);
-    });
-    super.dispose();
-  } // 팝업
-
-
 
   // 자동 텍스트 필드 포커스
   @override
-  void initState() {
+  void initText() {
     super.initState();
     myFocusNode = FocusNode();
   }
-
-
 
   @override
   Widget build(BuildContext context) {
@@ -115,14 +133,15 @@ class _MyHomePageState extends State<MyHomePage> {
             ),
             // input 창
             Padding(
-              padding: EdgeInsets.symmetric(horizontal: 8, vertical: 10),
+              padding: EdgeInsets.symmetric(horizontal: 8, vertical: 16),
               child: TextField(
                 // 텍스트 필드 포커스 사용
                 autofocus: true,
-                controller: myController,
+                controller: _textFieldController,
                 decoration: InputDecoration(
                   border: OutlineInputBorder(),
                   hintText: '금액 입력',
+                  errorText: _validate ? '값을 입력해주세요.' : null,
                 ),
                 // 숫자만 입력 되도록 제한
                 keyboardType: TextInputType.number,
@@ -139,7 +158,7 @@ class _MyHomePageState extends State<MyHomePage> {
         children: <Widget>[
           Align(
             alignment: Alignment(
-              Alignment.bottomRight.x, Alignment.bottomRight.y -0.2),
+              Alignment.bottomRight.x, Alignment.bottomRight.y -0.4),
               child: FloatingActionButton(
                 onPressed: (){
                   Navigator.push(
@@ -149,46 +168,79 @@ class _MyHomePageState extends State<MyHomePage> {
                     );
                 },
                 tooltip: '새로고침',
-                child: Icon(Icons.refresh),
+                child: Icon(Icons.refresh, color: Colors.deepPurple[900]),
                 ),
           ),
           
           Align(
+            alignment: Alignment(
+              Alignment.bottomRight.x, Alignment.bottomRight.y -0.2),
+              child: FloatingActionButton(
+                onPressed: (){
+                  // 텍스트 필드 null값이면
+                  setState(() {
+                    _textFieldController.text.isEmpty? _validate = true : _validate = false;
+                  });
+
+                  if (!_validate){
+                    // 상대 동의 얻을 방법 고민해보기
+                    // 동의 얻은 후 진행해야 함
+                    _calPrice(1);
+
+                    // 스낵바
+                    final snackBar = SnackBar(
+                      content: const Text('입력중입니다.'),
+                      action: SnackBarAction(label: '취소',
+                      onPressed: () {
+                        // 취소 하면 진행할 것 넣어..
+                        _calPrice(10);
+                      },),
+                    );
+                    // 스낵바 보여주기
+                    ScaffoldMessenger.of(context).showSnackBar(snackBar);
+
+                    // 텍스트 필드 초기화
+                    _textFieldController.clear();
+                  }
+                },  
+              tooltip: '값 보여주기',
+              child: Icon(Icons.add, color: Colors.deepPurple[900]),
+            ),
+          ),
+
+          Align(
             alignment: Alignment.bottomRight,
             child: FloatingActionButton(
               onPressed: (){
-                
-                // 상대 동의 얻을 방법 고민해보기
-                // 동의 얻은 후 진행해야 함
-                _calPrice(0);
+                // 텍스트 필드 null값이면
+                setState(() {
+                  _textFieldController.text.isEmpty? _validate = true : _validate = false;
+                });
 
-                // 스낵바
-                final snackBar = SnackBar(
-                  content: const Text('입력중입니다.'),
-                  action: SnackBarAction(label: '취소',
-                  onPressed: () {
-                    // 취소 하면 진행할 것 넣어..
-                    _calPrice(1);
-                  },),
-                );
-                // 스낵바 보여주기
-                ScaffoldMessenger.of(context).showSnackBar(snackBar);
+                if (!_validate){
+                  // 상대 동의 얻을 방법 고민해보기
+                  // 동의 얻은 후 진행해야 함
+                  _calPrice(-1);
 
-                // 텍스트 필드 초기화
-                myController.clear();
+                  // 스낵바
+                  final snackBar = SnackBar(
+                    content: const Text('입력중입니다.'),
+                    action: SnackBarAction(label: '취소',
+                    onPressed: () {
+                      // 취소 하면 진행할 것 넣어..
+                      _calPrice(10);
+                    },),
+                  );
+                  // 스낵바 보여주기
+                  ScaffoldMessenger.of(context).showSnackBar(snackBar);
 
-                // showDialog(
-                //   context: context,
-                //   builder: (context) {
-                //     return AlertDialog(
-                //       // 금액 입력 후 누를 버튼
-                //       content: Text(myController.text),
-                //     );
-                //   },
-                // );
+                  // 텍스트 필드 초기화
+                  _textFieldController.clear();
+                }
+
               },
               tooltip: '값 보여주기',
-              child: Icon(Icons.add),
+              child: Icon(Icons.minimize, color: Colors.deepPurple[900]),
             ),
           )],
       ),
