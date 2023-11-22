@@ -13,7 +13,7 @@ class Model {
   }
   
   initDB() async {
-    String path = Path.join(await getDatabasesPath(), 'ddutch.db');
+    String path = Path.join(await getDatabasesPath(), 'ddtest.db');
     
     return await openDatabase(
       path,
@@ -26,11 +26,11 @@ class Model {
 
 FutureOr<void> _onCreate(Database db, int version) {
   String sql = '''
-  CREATE TABLE ddutch(
+  CREATE TABLE ddtest(
     seq INTEGER PRIMARY KEY AUTOINCREMENT,
     sum INTEGER default 0,
     preSum INTEGER default 0,
-    i TEXT default "땃쥐1",
+    i TEXT,
     u TEXT default "땃쥐2")
   ''';
 
@@ -59,7 +59,7 @@ FutureOr<void> _onUpgrade(Database db, int oldVersion, int newVersion) {}
 // Future<void> iInsert(String i) async {
 //   var db = await database;
 //   await db.update(
-//     'Ddutch',
+//     'ddtest',
 //     {'i':i},
 //     where: 'seq = ?',
 //     whereArgs: [1]

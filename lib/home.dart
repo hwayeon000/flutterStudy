@@ -63,14 +63,14 @@ class _MyHomePageState extends State<MyHomePage> {
   // 데이터베이스 초기화
   Future<Database> _initDB() async {
     final dbPath = await getDatabasesPath();
-    final path = Path.join(dbPath, 'ddutch.db');
+    final path = Path.join(dbPath, 'dtest2.db');
     return await openDatabase(
       path,
       version: 1,
       onCreate: (db, version) async {
         await db.execute(
           // 'CREATE TABLE example(id INTEGER PRIMARY KEY, name TEXT)',
-          'CREATE TABLE ddutch(seq INTEGER PRIMARY KEY AUTOINCREMENT, sum INTEGER default 0, preSum INTEGER default 0, i TEXT default "땃쥐1", u TEXT default "땃쥐2")',
+          'CREATE TABLE dtest2(seq INTEGER PRIMARY KEY AUTOINCREMENT, sum INTEGER default 0, preSum INTEGER default 0, i TEXT default "땃쥐1", u TEXT default "땃쥐2")',
         );
       },
     );
@@ -79,7 +79,7 @@ class _MyHomePageState extends State<MyHomePage> {
   // 데이터 로딩
   Future<void> _loadData() async {
     final db = await _initDB();
-    final dataList = await db.query('ddutch');
+    final dataList = await db.query('dtest2');
     setState(() {
       _dataList = dataList;
     });
@@ -103,7 +103,7 @@ class _MyHomePageState extends State<MyHomePage> {
         price =prePrice;
       }
     });
-  } 
+  }
 
   // 자동 텍스트 필드 포커스
   @override
@@ -171,7 +171,7 @@ class _MyHomePageState extends State<MyHomePage> {
                 child: Icon(Icons.refresh, color: Colors.deepPurple[900]),
                 ),
           ),
-          
+
           Align(
             alignment: Alignment(
               Alignment.bottomRight.x, Alignment.bottomRight.y -0.2),
@@ -202,7 +202,7 @@ class _MyHomePageState extends State<MyHomePage> {
                     // 텍스트 필드 초기화
                     _textFieldController.clear();
                   }
-                },  
+                },
               tooltip: '값 보여주기',
               child: Icon(Icons.add, color: Colors.deepPurple[900]),
             ),

@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart' as Path;
 import 'model.dart' as model;
+import 'package:ddutch/DBHelper.dart';
 
 const Color darkBlue = Color.fromARGB(255, 18, 32, 47);
 
@@ -53,14 +54,14 @@ final GoRouter _router = GoRouter(
   debugLogDiagnostics: true,
 );
 
-class Ddutch {
+class ddutch {
   final int? seq;
   final int? sum;
   final int? preSum;
   final String? i;
   final String? u;
 
-  Ddutch({
+  ddutch({
     this.seq,
     this.sum,
     this.preSum,
@@ -68,17 +69,25 @@ class Ddutch {
     this.u
   });
 
-  Map<String, dynamic> toMap() => {
-    'seq': this.seq,
-    'sum': this.sum,
-    'preSum': this.preSum,
-  };
+  Map<String, dynamic> toMap(){
+    return {
+      'seq' : this.seq,
+      'sum': this.sum,
+      'preSum': this.preSum,
+      'i' : this.i,
+      'u' : this.u,
+    };
+  }
+
 }
 
-// DB
-final _model = model.Model();
-  
-
+List<ddutch> _dataList = [];
+// List<Map<String, dynamic>> _dataList = [];
+int seq = 1;
+// DB에서 데이터 꺼내로기
+void getData() async {
+  _dataList = (await DBHelper().selectData());
+}
 
 class MyApp extends StatelessWidget {
   @override
@@ -113,7 +122,6 @@ class _SetNameState extends State<SetName> {
   bool _validate = false;
   // final myController = TextEditingController();
 
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -132,7 +140,7 @@ class _SetNameState extends State<SetName> {
                 decoration: InputDecoration(
                   border: OutlineInputBorder(),
                   hintText: '이름을 입력해주세요.',
-                  errorText: _validate ? '값을 입력해주세요.' : null,
+                  errorText: _validate ? '값을 입력하세요.' : null,
                 ),
               ),
             ),
@@ -144,9 +152,10 @@ class _SetNameState extends State<SetName> {
                 });
                 if(!_validate){
                   //dd
-                  // await _model.iInsert(_textFieldController.text),
+                  // await DBHelper().insertMyName(_textFieldController.text);
+                  await DBHelper().updateMyName(seq, _textFieldController.text);
                   context.go('/homePage');
-                } 
+                }
                 // 텍스트 필드 초기화
                 _textFieldController.clear();
               },
@@ -168,7 +177,6 @@ class _SetNameState extends State<SetName> {
   }
 }
 
-
 class HomePage extends StatefulWidget {
   const HomePage({super.key, required this.title});
   final String title;
@@ -187,9 +195,10 @@ class _HomePageState extends State<HomePage> {
         child : Column(
           mainAxisAlignment : MainAxisAlignment.center,
           children: [
+            // Text(_dataList[0]['i']),
             ElevatedButton(
               onPressed: () => context.go('/homePage/studentA'),
-              child: const Text('studentA'),
+              child: Text('homePage'),
             ),
           ],    
         ),
@@ -197,7 +206,6 @@ class _HomePageState extends State<HomePage> {
     );
   }
 }
-
 
 class StudentA extends StatefulWidget {
   const StudentA({super.key, required this.title});
@@ -209,6 +217,10 @@ class StudentA extends StatefulWidget {
 class _StudentA extends State<StudentA> {
   @override
   Widget build(BuildContext context) {
+    // 데이터 로딩
+    // var dataList = DBHelper().selectData() as List<Map<String, dynamic>>;
+    // var dataList = DBHelper().selectData();
+    getData();
     return Scaffold(
       appBar : AppBar (
         title: const Text('StudentA'),
@@ -217,8 +229,9 @@ class _StudentA extends State<StudentA> {
         child : Column(
           mainAxisAlignment : MainAxisAlignment.center,
           children: [
-            const Text('This is Student A'),
-          ],    
+            Text(_dataList[0].u.toString()),
+            const Text(selectionColor: Colors.teal,'This is Student A'),
+          ],
         ),
       ),
     );
